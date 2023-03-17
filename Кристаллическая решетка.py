@@ -43,14 +43,33 @@ def iscross(a:Supercell, b:Supercell):
     for atom in a.atoms:
         if atom.coordinates in b.atom_coordinates:
             b.change_atom(atom)
-  
 
-a = Supercell(0, 0, 0)
-b = Supercell(0, 0, 2)
-iscross(a, b)
-a.get_atom(2,2,2).change_coordinates(2, 2, 3)
-# print(a.atom_coordinates)
-a.refresh_atom_coordinates()
-b.refresh_atom_coordinates()
+def Force(coordinates=np.array([1,1])):
+    e = 8.85 * 10**-12
+    sigma = 3.8 * 10**-10
+    def U(distance: np.ndarray)-> np.ndarray: 
+        return 4*e * (sigma**12 / distance**12 - sigma**6 / distance**6)
+    def dU(distance: np.ndarray)-> np.ndarray:
+        return 24*e * (sigma**6 / distance**13 - 2 * sigma**12 / distance**13)
+    def VecModule(vectors: np.array)-> np.array: # Длина векторов
+        return np.sqrt(np.sum(vectors**2, 1))
+    def VecDir(vectors: np.array)-> np.array: # Сонаправленные вектора длиной 1 (Их напраления)
+        module = VecModule(vectors)
+        return vectors / module.reshape(module.size, 1)
+    dUvectors = dU(VecModule(coordinates))
+    return np.sum(dUvectors.reshape(dUvectors.size, 1) * VecDir(coordinates))
 
-print(a.atom_coordinates,'\n', b.atom_coordinates)
+# a = Supercell(0, 0, 0)
+# b = Supercell(0, 0, 2)
+# iscross(a, b)
+# a.get_atom(2,2,2).change_coordinates(2, 2, 3)
+# # print(a.atom_coordinates)
+# a.refresh_atom_coordinates()
+# b.refresh_atom_coordinates()
+
+# print(a.atom_coordinates,'\n', b.atom_coordinates)
+
+# print(Force())
+a = np.array([[1, 2, 1],[1, 3, 1]])
+
+print(Force(a))
