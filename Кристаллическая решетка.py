@@ -15,7 +15,7 @@ class atom:
 class Supercell:
     def __init__(self, x_zero_index, y_zero_index, z_zero_index, typ='Face_centered_cubic'):
         if typ =='Face_centered_cubic':
-            cells = 7
+            cells = 1
             size = cells * 2 + 1
             self.atoms = []#[[x_zero_index + x, y_zero_index + y, z_zero_index + z] for x in range(size) for y in range(size) for z in range(size) if sum((x,y,z))%2 != 1]
             
@@ -38,15 +38,19 @@ class Supercell:
 
     def refresh_atom_coordinates(self):
         self.atom_coordinates = [i.coordinates for i in self.atoms]
+    
+    def getndarray(self):
+        return np.array(self.atom_coordinates) * 3.8 * 10**-10
+
 
 def iscross(a:Supercell, b:Supercell):
     for atom in a.atoms:
         if atom.coordinates in b.atom_coordinates:
             b.change_atom(atom)
 
-def Force(coordinates=np.array([1,1])):
-    e = 8.85 * 10**-12
-    sigma = 3.8 * 10**-10
+def Force(coordinates):
+    e = 8.85 * 10**-12 # электрическая проницаемость вакуума
+    sigma = 3.8 * 10**-10 # межатомное расстояние для Ar
     def U(distance: np.ndarray)-> np.ndarray: 
         return 4*e * (sigma**12 / distance**12 - sigma**6 / distance**6)
     def dU(distance: np.ndarray)-> np.ndarray:
@@ -57,7 +61,7 @@ def Force(coordinates=np.array([1,1])):
         module = VecModule(vectors)
         return vectors / module.reshape(module.size, 1)
     dUvectors = dU(VecModule(coordinates))
-    return np.sum(dUvectors.reshape(dUvectors.size, 1) * VecDir(coordinates))
+    return np.sum(dUvectors.reshape(dUvectors.size, 1) * VecDir(coordinates), axis=0)
 
 # a = Supercell(0, 0, 0)
 # b = Supercell(0, 0, 2)
@@ -69,7 +73,9 @@ def Force(coordinates=np.array([1,1])):
 
 # print(a.atom_coordinates,'\n', b.atom_coordinates)
 
-# print(Force())
-a = np.array([[1, 2, 1],[1, 3, 1]])
+a = Supercell(0, 0, 0)
+atoms = a.getndarray()
+print(Force(atoms - atoms[2]))
 
-print(Force(a))
+
+# print(Force(a))
